@@ -1,0 +1,20 @@
+{
+    "name": "yakubenko/jtokens",
+    "description": "A Very basic implementation of JWT for php",
+    "type": "library",
+    "version": "0.0.1",
+    "require": {
+        "myclabs/php-enum": "^1.7"
+    },
+    "authors": [
+        {
+            "name": "Stan Yakubenko",
+            "email": "sn.yakubenko@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Yakubenko\\JTokens\\": "src/"
+        }
+    }
+}
