@@ -8,7 +8,7 @@ use MyCLabs\Enum\Enum;
  * @method static self HS384()
  * @method static self HS512()
  */
-final class AlgorythmTypes extends Enum
+final class AlgorithmTypes extends Enum
 {
     private const HS256 = 'sha256';
     private const HS384 = 'sha384';
