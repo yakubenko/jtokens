@@ -3,6 +3,7 @@
     "description": "A Very basic implementation of JWT for php",
     "type": "library",
     "version": "0.0.1",
+    "license": "MIT",
     "require": {
         "myclabs/php-enum": "^1.7"
     },
