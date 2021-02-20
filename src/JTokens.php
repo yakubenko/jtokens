@@ -246,7 +246,7 @@ class JTokens
         $payload = json_decode($payload, true);
 
         if (!is_array($payload)) {
-            throw new Exception(__('Wrong token format'));
+            throw new Exception('Wrong token format');
         }
 
         return $payload;
