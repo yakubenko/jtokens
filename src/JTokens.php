@@ -122,6 +122,7 @@ class JTokens
     /**
      * Sets $this->expires based on the value of
      * $period
+     *
      * @see strtotime()
      * @param string $period Ex.: "+ 10 minutes" or "+ 2 hours" etc.
      * @return self
@@ -146,7 +147,7 @@ class JTokens
      *
      * @return int A timestamp value
      */
-    private function getExpires() :int
+    public function getExpires() :int
     {
         if (!is_null($this->expiresTs) && is_numeric($this->expiresTs)) {
             return $this->expiresTs;
@@ -192,7 +193,9 @@ class JTokens
     public function makeToken() :string
     {
         if (empty($this->secretKey)) {
-            throw new Exception('The secret key is empty. Can not make a token');
+            throw new Exception(
+                'The secret key is empty. Can not make a token.'
+            );
         }
 
         $header = $this->makeHeader();
@@ -261,8 +264,8 @@ class JTokens
      * @return bool
      */
     public static function validateToken(
-        $token,
-        $key,
+        string $token,
+        string $key,
         ?Enum\AlgorithmTypes $algorithm = null
     ) :bool {
         list($header, $payload, $signature) = self::splitToken($token);
@@ -287,14 +290,14 @@ class JTokens
     /**
      * Generates a hash which can be used for different purposes
      *
-     * @param string $prefix Concat the hash with this prefix
      * @param int $numBytes The number of random bytes
+     * @param string $prefix Concat the hash with this prefix
      * @param Enum\SupportedTypes|null $algo The algo that will be used
      * @return string
      */
     public static function generateHash(
-        $prefix = '',
-        $numBytes = 10000,
+        int $numBytes = 10000,
+        string $prefix = '',
         ?Enum\SupportedTypes $algo = null
     ) :string {
         $algo = $algo ?? Enum\SupportedTypes::HS256();
