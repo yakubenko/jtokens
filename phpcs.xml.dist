@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+    <description>Coding standard</description>
+
+    <!-- <arg name="basepath" value="."/> -->
+    <arg name="cache" value=".phpcs-cache"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <rule ref="CakePHP"/>
+
+    <file>src/</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+
+    <rule ref="SlevomatCodingStandard.Namespaces.FullyQualifiedClassNameInAnnotation">
+        <exclude
+            name="SlevomatCodingStandard.Namespaces.FullyQualifiedClassNameInAnnotation.NonFullyQualifiedClassName" />
+    </rule>
+
+    <rule ref="Generic.Commenting.Todo">
+        <exclude name="Generic.Commenting.Todo.CommentFound" />
+        <exclude name="Generic.Commenting.Todo.TaskFound" />
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses">
+        <exclude
+            name="SlevomatCodingStandard.Namespaces.UnusedUses.UnusedUse" />
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.PHP">
+        <exclude
+            name="SlevomatCodingStandard.PHP.UselessParentheses" />
+        <exclude
+            name="SlevomatCodingStandard.PHP.RequireExplicitAssertion.RequiredExplicitAssertion" />
+    </rule>
+
+    <rule ref="Generic.WhiteSpace.ScopeIndent.IncorrectExact">
+        <exclude-pattern>*/src/*</exclude-pattern>
+    </rule>
+
+    <rule ref="CakePHP.Commenting.FunctionComment">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+</ruleset>

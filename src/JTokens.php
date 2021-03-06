@@ -50,7 +50,7 @@ class JTokens
      * @param bool $safe safety flag
      * @return self
      */
-    public function setUrlSafe(bool $safe) :self
+    public function setUrlSafe(bool $safe): self
     {
         $this->urlSafe = $safe;
 
@@ -63,7 +63,7 @@ class JTokens
      * @param string $key The key
      * @return self
      */
-    public function setSecretKey(string $key) :self
+    public function setSecretKey(string $key): self
     {
         $this->secretKey = $key;
 
@@ -76,7 +76,7 @@ class JTokens
      * @param array $payload Array of the payload data
      * @return self
      */
-    public function setPayload(array $payload = []) :self
+    public function setPayload(array $payload = []): self
     {
         $this->payload = $payload;
 
@@ -90,7 +90,7 @@ class JTokens
      *
      * @return string
      */
-    private function makeHeader() :string
+    private function makeHeader(): string
     {
         $algorithm = array_flip(
             Enum\AlgorithmTypes::toArray()
@@ -98,7 +98,7 @@ class JTokens
 
         $data = [
             'alg' => $algorithm,
-            'typ' => $this->type
+            'typ' => $this->type,
         ];
 
         $json = json_encode($data);
@@ -112,7 +112,7 @@ class JTokens
      * @param Enum\ExpireModes|null $mode Sets one of predefined modes (strict|middle|low)
      * @return self
      */
-    public function setExpireMode(?Enum\ExpireModes $mode) :self
+    public function setExpireMode(?Enum\ExpireModes $mode): self
     {
         $this->expireMode = $mode;
 
@@ -127,7 +127,7 @@ class JTokens
      * @param string $period Ex.: "+ 10 minutes" or "+ 2 hours" etc.
      * @return self
      */
-    public function setExpiresPeriod(string $period) :self
+    public function setExpiresPeriod(string $period): self
     {
         $expiresTs = strtotime($period);
 
@@ -141,31 +141,44 @@ class JTokens
     }
 
     /**
+     * Manually sets the expires ts
+     *
+     * @param int $ts Timestamp
+     * @return self
+     */
+    public function setExpiresTs(int $ts): self
+    {
+        $this->expiresTs = $ts;
+
+        return $this;
+    }
+
+    /**
      * Returns a string which represents a timestamp when
      * the token must be invalidated. The returning value is based on
      * the value of $this->expireMode
      *
      * @return int A timestamp value
      */
-    public function getExpires() :int
+    public function getExpires(): int
     {
         if (!is_null($this->expiresTs) && is_numeric($this->expiresTs)) {
             return $this->expiresTs;
         }
 
         // This is quite a long period. So, lets think that the token never expires
-        $expires = strtotime("+ 10 years");
+        $expires = strtotime('+ 10 years');
 
         switch ($this->expireMode) {
             case Enum\ExpireModes::STRICT():
-                $expires = strtotime("+ 1 day");
+                $expires = strtotime('+ 1 day');
                 break;
 
             case Enum\ExpireModes::MIDDLE():
-                $expires = strtotime("+ 1 week");
+                $expires = strtotime('+ 1 week');
                 break;
             case Enum\ExpireModes::LOW():
-                $expires = strtotime("+ 1 month");
+                $expires = strtotime('+ 1 month');
                 break;
         }
 
@@ -177,7 +190,7 @@ class JTokens
      *
      * @return string
      */
-    private function makePayload() :string
+    private function makePayload(): string
     {
         $exp = $this->getExpires();
         $json = json_encode(array_merge($this->payload, compact('exp')));
@@ -190,7 +203,7 @@ class JTokens
      *
      * @return string
      */
-    public function makeToken() :string
+    public function makeToken(): string
     {
         if (empty($this->secretKey)) {
             throw new Exception(
@@ -220,9 +233,9 @@ class JTokens
      * @return array
      * @throws Exception
      */
-    public static function splitToken(string $token) :array
+    public static function splitToken(string $token): array
     {
-        $parts = explode(".", trim($token));
+        $parts = explode('.', trim($token));
 
         /**
          * @TODO: add regex check if a part is base64 encoded
@@ -242,7 +255,7 @@ class JTokens
      * @param string $token A JWT token
      * @return array
      */
-    public static function getTokenPayload(string $token) :array
+    public static function getTokenPayload(string $token): array
     {
         $parts = self::splitToken($token);
         $payload = base64_decode(self::base64Compat($parts[1]));
@@ -267,8 +280,8 @@ class JTokens
         string $token,
         string $key,
         ?Enum\AlgorithmTypes $algorithm = null
-    ) :bool {
-        list($header, $payload, $signature) = self::splitToken($token);
+    ): bool {
+        [$header, $payload, $signature] = self::splitToken($token);
 
         $algorithm = $algorithm ?? Enum\AlgorithmTypes::HS256();
         $signatureCheck = base64_encode(
@@ -299,7 +312,7 @@ class JTokens
         int $numBytes = 10000,
         string $prefix = '',
         ?Enum\SupportedTypes $algo = null
-    ) :string {
+    ): string {
         $algo = $algo ?? Enum\SupportedTypes::HS256();
 
         return $prefix . hash(
@@ -315,7 +328,7 @@ class JTokens
      * @param string $encString base64url_encoded string
      * @return string
      */
-    public static function base64Compat(string $encString) :string
+    public static function base64Compat(string $encString): string
     {
         $encString = str_replace('=', '', $encString);
         $encString = str_replace(['-', '_'], ['+', '/'], $encString);
@@ -342,7 +355,7 @@ class JTokens
      * @param string $encString base64_encoded string
      * @return string
      */
-    public static function base64UrlSafe(string $encString) :string
+    public static function base64UrlSafe(string $encString): string
     {
         $encString = str_replace('=', '', $encString);
         $encString = str_replace(['+', '/'], ['-', '_'], $encString);
@@ -356,7 +369,7 @@ class JTokens
      * @param string $str string to encode
      * @return string
      */
-    private function encode64(string $str) :string
+    private function encode64(string $str): string
     {
         return ($this->urlSafe)
         ? self::base64UrlSafe(base64_encode($str))
@@ -368,7 +381,7 @@ class JTokens
      *
      * @return Enum\AlgorithmTypes
      */
-    public function getAlgorithm() :Enum\AlgorithmTypes
+    public function getAlgorithm(): Enum\AlgorithmTypes
     {
         return $this->algorithm;
     }
@@ -379,7 +392,7 @@ class JTokens
      * @param Enum\AlgorithmTypes $algorithm algorithm
      * @return self
      */
-    public function setAlgorithm(Enum\AlgorithmTypes $algorithm) :self
+    public function setAlgorithm(Enum\AlgorithmTypes $algorithm): self
     {
         $this->algorithm = $algorithm;
 

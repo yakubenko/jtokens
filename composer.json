@@ -17,5 +17,8 @@
         "psr-4": {
             "Yakubenko\\JTokens\\": "src/"
         }
+    },
+    "require-dev": {
+        "vimeo/psalm": "^4.6"
     }
 }
