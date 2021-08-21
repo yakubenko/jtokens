@@ -1,14 +1,17 @@
 <?php
+declare(strict_types=1);
+
 namespace Yakubenko\JTokens\Enum;
 
 use MyCLabs\Enum\Enum;
 
 /**
+ * @psalm-immutable
  * @method static self LOW()
  * @method static self MIDDLE()
  * @method static self STRICT()
  */
-final class ExpireModes extends Enum
+final class ExpireMode extends Enum
 {
     private const LOW = 'low';
     private const MIDDLE = 'middle';
