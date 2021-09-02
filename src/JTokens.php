@@ -4,10 +4,11 @@ declare(strict_types=1);
 namespace Yakubenko\JTokens;
 
 use Exception;
+use Yakubenko\JTokens\Interface\KeyInterface;
 
 class JTokens
 {
-    private string $secretKey;
+    private $secretKey;
     private Enum\AlgorithmType $algorithm;
     private Enum\SupportedType $type;
 
@@ -60,11 +61,19 @@ class JTokens
     /**
      * Sets the secret key
      *
-     * @param string $key The key
+     * @param mixed $key The key
      * @return self
      */
-    public function setSecretKey(string $key): self
+    public function setSecretKey($key): self
     {
+        /**
+         * Will be removed after php 8 migration
+         * and using union types
+         */
+        if (!is_string($key) && !$key instanceof KeyInterface) {
+            throw new Exception('Wrong key type');
+        }
+
         $this->secretKey = $key;
 
         return $this;
@@ -178,6 +187,7 @@ class JTokens
                 $expires = strtotime('+ 1 week');
                 break;
             case Enum\ExpireMode::LOW():
+            default:
                 $expires = strtotime('+ 1 month');
                 break;
         }
@@ -193,6 +203,11 @@ class JTokens
     private function makePayload(): string
     {
         $exp = $this->getExpires();
+
+        if ($this->secretKey instanceof KeyInterface) {
+            $this->payload['key_id'] = $this->secretKey->getId();
+        }
+
         $json = json_encode(array_merge($this->payload, compact('exp')));
 
         return $this->encode64($json);
@@ -205,7 +220,7 @@ class JTokens
      */
     public function makeToken(): string
     {
-        if (empty($this->secretKey)) {
+        if (!$this->secretKey) {
             throw new Exception(
                 'The secret key is empty. Can not make a token.'
             );
@@ -213,11 +228,14 @@ class JTokens
 
         $header = $this->makeHeader();
         $payload = $this->makePayload();
+        $secretKey = $this->secretKey instanceof KeyInterface
+        ? $this->secretKey->getStringValue()
+        : $this->secretKey;
 
         $hash = hash_hmac(
             $this->getAlgorithm()->getValue(),
             $header . '.' . $payload,
-            $this->secretKey,
+            $secretKey,
             true
         );
 
@@ -279,28 +297,72 @@ class JTokens
      * @param string $token A JWT token
      * @param string $key a key that was used to encrypt the token
      * @param Enum\AlgorithmType|null $algorithm algo
+     * @param Interface\KeysStorageInterface $keysStorage Keys storage
      * @return bool
      */
     public static function validateToken(
         string $token,
-        string $key,
-        ?Enum\AlgorithmType $algorithm = null
+        ?string $key = null,
+        ?Enum\AlgorithmType $algorithm = null,
+        ?Interface\KeysStorageInterface $keysStorage = null
     ): bool {
         [$header, $payload, $signature] = self::splitToken($token);
+        $payloadDecoded = self::getTokenPayload($token);
+        $keyId = $payloadDecoded['key_id'] ?? null;
+
+        if ($keyId && !$keysStorage) {
+            throw new Exception(
+                sprintf(
+                    'No Keys storage (%s) provided',
+                    Interface\KeysStorageInterface::class
+                )
+            );
+        }
+
+        if ($keysStorage && !$keyId) {
+            throw new Exception(
+                'Key identifier is not in the payload'
+            );
+        }
+
+        if ($keysStorage) {
+            try {
+                $key = $keysStorage->getKeyById($keyId);
+            } catch (Exception $e) {
+                return false;
+            }
+        }
+
+        // Check the key level
+        if (
+            $key instanceof KeyInterface &&
+            ($key->isRevoked() || $key->isExpired())
+        ) {
+            return false;
+        }
+
+        if (!empty($payloadDecoded['exp']) && $payloadDecoded['exp'] <= time()) {
+            return false;
+        }
+
+        // Get the actual Key value
+        $keyStrValue = $key instanceof KeyInterface
+        ? $key->getStringValue()
+        : $key;
+
+        if (!$keyStrValue) {
+            return false;
+        }
 
         $algorithm = $algorithm ?? Enum\AlgorithmType::HS256();
         $signatureCheck = base64_encode(
             hash_hmac(
                 $algorithm->getValue(),
                 $header . '.' . $payload,
-                $key,
+                $keyStrValue,
                 true
             )
         );
-
-        if (!empty($payload['exp']) && $payload['exp'] <= time()) {
-            return false;
-        }
 
         return hash_equals(self::base64Compat($signature), $signatureCheck);
     }
@@ -321,7 +383,7 @@ class JTokens
         $algo = $algo ?? Enum\SupportedType::HS256();
 
         return $prefix . hash(
-            $algo,
+            (string)$algo,
             openssl_random_pseudo_bytes($numBytes) .
             openssl_random_pseudo_bytes($numBytes)
         );
